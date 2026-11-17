@@ -1,5 +1,5 @@
 # Ex03 To-Do List using JavaScript
-## Date:
+## Date: 17-11-2026
 
 ## AIM
 To create a To-do Application with all features using JavaScript.
@@ -36,9 +36,336 @@ Deploy the website.
 Upload to GitHub Pages for free hosting.
 
 ## PROGRAM
+```
+index.html
 
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Todo Application</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #a18cd1, #fbc2eb, #8ec5fc);
+            background-attachment: fixed;
+            padding: 30px;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
+            background: rgba(255,255,255,0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            text-align: center;
+            color: #7651a8;
+        }
+
+        p {
+            text-align: center;
+        }
+
+        input, select {
+            padding: 12px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        button {
+            background: #8756b5;
+            color: white;
+            border: none;
+            padding: 11px 15px;
+            margin: 5px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #61368e;
+        }
+
+        #taskInput {
+            width: 35%;
+        }
+
+        #searchInput {
+            width: 90%;
+        }
+
+        li {
+            background: linear-gradient(90deg, #f3e8ff, #ffe6f3);
+            padding: 15px;
+            margin: 12px 0;
+            list-style: none;
+            border-radius: 8px;
+            border-left: 5px solid #a18cd1;
+        }
+
+        .completed {
+            text-decoration: line-through;
+            color: gray;
+        }
+
+        .clear {
+            background: #e75480;
+        }
+
+        .dark-mode {
+            background: #202033;
+            color: white;
+        }
+
+        .dark-mode .container {
+            background: #38334b;
+            color: white;
+        }
+
+        .dark-mode li {
+            background: #514564;
+            color: white;
+        }
+
+        @media(max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            #taskInput, #searchInput {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>✨ My Todo List</h1>
+    <p>Organize Your Daily Tasks</p>
+
+    <input type="text" id="taskInput"
+    placeholder="Enter your task">
+
+    <select id="priority">
+        <option value="Low">Low Priority</option>
+        <option value="Medium">Medium Priority</option>
+        <option value="High">High Priority</option>
+    </select>
+
+    <input type="date" id="dueDate">
+
+    <button onclick="addTask()">Add Task</button>
+
+    <br><br>
+
+    <input type="text" id="searchInput"
+    placeholder="Search tasks..." oninput="displayTasks()">
+
+    <br><br>
+
+    <center>
+        <button onclick="filterTasks('all')">All</button>
+        <button onclick="filterTasks('pending')">Pending</button>
+        <button onclick="filterTasks('completed')">Completed</button>
+    </center>
+
+    <h3 id="taskCount">Total Tasks: 0</h3>
+
+    <ul id="taskList"></ul>
+
+    <center>
+        <button class="clear" onclick="clearCompleted()">
+            Clear Completed
+        </button>
+
+        <button onclick="toggleDarkMode()">
+            Dark Mode
+        </button>
+    </center>
+
+</div>
+
+<script>
+
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+let currentFilter = "all";
+
+function saveTasks() {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+
+// Add Task
+function addTask() {
+
+    let input = document.getElementById("taskInput");
+    let priority = document.getElementById("priority").value;
+    let date = document.getElementById("dueDate").value;
+
+    if (input.value.trim() === "") {
+        alert("Please enter a task!");
+        return;
+    }
+
+    tasks.push({
+        id: Date.now(),
+        text: input.value.trim(),
+        priority: priority,
+        date: date,
+        completed: false
+    });
+
+    input.value = "";
+    document.getElementById("dueDate").value = "";
+
+    saveTasks();
+    displayTasks();
+}
+
+// Display Tasks
+function displayTasks() {
+
+    let list = document.getElementById("taskList");
+    let search = document.getElementById("searchInput").value.toLowerCase();
+
+    list.innerHTML = "";
+
+    let filtered = tasks.filter(task => {
+
+        let matchesSearch = task.text.toLowerCase().includes(search);
+
+        let matchesFilter =
+            currentFilter === "all" ||
+            (currentFilter === "pending" && !task.completed) ||
+            (currentFilter === "completed" && task.completed);
+
+        return matchesSearch && matchesFilter;
+    });
+
+    filtered.forEach(task => {
+
+        let li = document.createElement("li");
+
+        let name = document.createElement("span");
+        name.textContent = task.text;
+
+        if (task.completed) {
+            name.classList.add("completed");
+        }
+
+        let details = document.createElement("p");
+
+        details.textContent =
+            "Priority: " + task.priority +
+            (task.date ? " | Due: " + task.date : "");
+
+        let completeBtn = document.createElement("button");
+        completeBtn.textContent = task.completed ? "Undo" : "Complete";
+        completeBtn.onclick = () => toggleTask(task.id);
+
+        let editBtn = document.createElement("button");
+        editBtn.textContent = "Edit";
+        editBtn.onclick = () => editTask(task.id);
+
+        let deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "Delete";
+        deleteBtn.onclick = () => deleteTask(task.id);
+
+        li.append(name, details, completeBtn, editBtn, deleteBtn);
+
+        list.appendChild(li);
+    });
+
+    document.getElementById("taskCount").textContent =
+        "Total: " + tasks.length +
+        " | Pending: " + tasks.filter(t => !t.completed).length +
+        " | Completed: " + tasks.filter(t => t.completed).length;
+}
+
+// Complete Task
+function toggleTask(id) {
+
+    tasks = tasks.map(task =>
+        task.id === id
+        ? {...task, completed: !task.completed}
+        : task
+    );
+
+    saveTasks();
+    displayTasks();
+}
+
+// Edit Task
+function editTask(id) {
+
+    let task = tasks.find(t => t.id === id);
+
+    let newText = prompt("Edit your task:", task.text);
+
+    if (newText !== null && newText.trim() !== "") {
+        task.text = newText.trim();
+        saveTasks();
+        displayTasks();
+    }
+}
+
+// Delete Task
+function deleteTask(id) {
+
+    if (confirm("Are you sure you want to delete?")) {
+
+        tasks = tasks.filter(task => task.id !== id);
+
+        saveTasks();
+        displayTasks();
+    }
+}
+
+// Filter Tasks
+function filterTasks(filter) {
+    currentFilter = filter;
+    displayTasks();
+}
+
+// Clear Completed
+function clearCompleted() {
+
+    tasks = tasks.filter(task => !task.completed);
+
+    saveTasks();
+    displayTasks();
+}
+
+// Dark Mode
+function toggleDarkMode() {
+    document.body.classList.toggle("dark-mode");
+}
+
+// Initial Display
+displayTasks();
+
+</script>
+
+</body>
+</html>
+```
 
 ## OUTPUT
+![alt text](<Screenshot 2026-11-17 204448.png>)
+![alt text](<Screenshot 2026-11-17 204623.png>)
 
 
 ## RESULT
